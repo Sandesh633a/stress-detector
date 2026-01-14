@@ -1,5 +1,7 @@
 tensorflow==2.15.0
-librosa
 numpy
-flask
+librosa
 soundfile
+flask
+flask-cors
+gunicorn
