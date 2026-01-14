@@ -23,31 +23,31 @@
 
 
 
-import tensorflow as tf
-print("🔥 TENSORFLOW VERSION:", tf.__version__)
+# import tensorflow as tf
+# print("🔥 TENSORFLOW VERSION:", tf.__version__)
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    try:
-        if "audio" not in request.files:
-            return jsonify({"error": "No audio file received"}), 400
+# @app.route("/predict", methods=["POST"])
+# def predict():
+#     try:
+#         if "audio" not in request.files:
+#             return jsonify({"error": "No audio file received"}), 400
 
-        audio = request.files["audio"]
+#         audio = request.files["audio"]
 
-        temp_path = "temp.wav"
-        audio.save(temp_path)
+#         temp_path = "temp.wav"
+#         audio.save(temp_path)
 
-        result = predict_emotion(temp_path)
+#         result = predict_emotion(temp_path)
 
-        os.remove(temp_path)
-        return jsonify(result)
+#         os.remove(temp_path)
+#         return jsonify(result)
 
-    except Exception as e:
-        print("🔥 FLASK ERROR:", repr(e))
-        return jsonify({
-            "error": "Processing failed",
-            "details": str(e)
-        }), 500
+#     except Exception as e:
+#         print("🔥 FLASK ERROR:", repr(e))
+#         return jsonify({
+#             "error": "Processing failed",
+#             "details": str(e)
+#         }), 500
 
 
 
@@ -91,3 +91,82 @@ def predict():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import os
+import uuid
+import tensorflow as tf
+from flask import Flask, request, jsonify
+from predict import predict_emotion
+
+# -----------------------------
+# 🚀 Flask app initialization
+# -----------------------------
+app = Flask(__name__)
+
+# -----------------------------
+# 🔥 Log TensorFlow version
+# -----------------------------
+print("🔥 TENSORFLOW VERSION:", tf.__version__)
+
+# -----------------------------
+# 🏠 Health check
+# -----------------------------
+@app.route("/", methods=["GET"])
+def home():
+    return "FLASK ML API RUNNING"
+
+# -----------------------------
+# 🎧 Prediction endpoint
+# -----------------------------
+@app.route("/predict", methods=["POST"])
+def predict():
+    temp_path = None
+    try:
+        if "audio" not in request.files:
+            return jsonify({"error": "No audio file received"}), 400
+
+        audio = request.files["audio"]
+
+        temp_path = f"temp_{uuid.uuid4().hex}.wav"
+        audio.save(temp_path)
+
+        result = predict_emotion(temp_path)
+        return jsonify(result)
+
+    except Exception as e:
+        print("🔥 FLASK ERROR:", repr(e))
+        return jsonify({
+            "error": "Processing failed",
+            "details": str(e)
+        }), 500
+
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
