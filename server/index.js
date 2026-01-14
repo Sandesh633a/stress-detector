@@ -1,3 +1,14 @@
+// Keep ML API warm
+setInterval(async () => {
+  try {
+    await axios.get(process.env.ML_API_URL);
+    console.log("🔥 ML API warmed");
+  } catch {}
+}, 5 * 60 * 1000); // every 5 minutes
+
+
+
+
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("ffmpeg-static");
 ffmpeg.setFfmpegPath(ffmpegPath);
