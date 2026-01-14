@@ -1,0 +1,50 @@
+# Node
+node_modules/
+npm-debug.log
+
+# React
+client/node_modules/
+client/build/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+
+# ML / Data
+*.npy
+*.pkl
+*.h5
+*.joblib
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+
+
+
+
+
+# Python
+__pycache__/
+*.pyc
+
+# ML data & training
+*.npy
+data/
+temp_*.webm
+*.keras
+
+# Node
+node_modules/
+
+# React
+client/node_modules/
+client/build/
+
+# Env
+.env

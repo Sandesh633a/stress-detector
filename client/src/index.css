@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  box-sizing: border-box;
+}
+
+/* html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #0b1020, #05060f);
+  color: #e5e7eb;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+} */
+
+
+
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100vh;
+  width: 100%;
+  background:
+    radial-gradient(circle at top left, rgba(99,102,241,0.25), transparent 40%),
+    radial-gradient(circle at top right, rgba(139,92,246,0.25), transparent 45%),
+    radial-gradient(circle at bottom, rgba(236,72,153,0.15), transparent 50%),
+    linear-gradient(180deg, #020617, #020617);
+  color: #e5e7eb;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow-x: hidden;
+}
+
+
+body {
+  background-attachment: fixed;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+/* 🚀 Smooth scrolling + performance */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tell browser what will animate */
+.motion-safe {
+  will-change: transform, opacity;
+}
+
+/* Reduce blur repaint cost */
+.blur-optimized {
+  filter: blur(80px);
+}
+
+
+
+
+/* Lenis requirements */
+html.lenis {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Performance tuning */
+* {
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+* {
+  transform: translateZ(0);
+}
+
+.glass {
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+
+
+
+
+@keyframes glow-slide {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+.animate-glow-slide {
+  animation: glow-slide 4s linear infinite;
+}
