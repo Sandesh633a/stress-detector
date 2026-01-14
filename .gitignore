@@ -52,7 +52,6 @@ client/build/
 
 
 # ML training & temp
-*.h5
 *.npy
 data/
 temp_*.webm
