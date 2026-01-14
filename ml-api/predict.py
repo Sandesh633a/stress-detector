@@ -13,7 +13,7 @@ SMOOTHING_WINDOW = 3
 prediction_buffer = deque(maxlen=SMOOTHING_WINDOW)
 
 # -----------------------------
-# 📦 Model loading (ABSOLUTE + SAFE)
+# 📦 Model loading
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "emotion_model.h5")
@@ -21,41 +21,35 @@ MODEL_PATH = os.path.join(BASE_DIR, "emotion_model.h5")
 print("🔍 Loading model from:", MODEL_PATH)
 print("📁 Model file exists:", os.path.exists(MODEL_PATH))
 
-# Emotion labels (must match training order)
 emotion_labels = [
     "Neutral", "Calm", "Happy", "Sad",
     "Angry", "Fearful", "Disgust", "Surprised"
 ]
 
-# ✅ Load model ONCE at startup
 model = tf.keras.models.load_model(MODEL_PATH)
 print("✅ Model loaded successfully")
 
 # -----------------------------
-# 🎧 Prediction function (MEMORY SAFE)
+# 🎧 Prediction function (STABLE)
 # -----------------------------
 def predict_emotion(audio_path):
-    """
-    Memory-safe audio inference for Render Free Tier
-    """
 
-    # 1️⃣ Load audio with fixed sample rate & mono (CRITICAL)
+    # Load audio safely
     signal, sr = librosa.load(audio_path, sr=16000, mono=True)
 
-    # 2️⃣ Limit audio length (max 5 seconds)
-    max_len = 5 * sr
-    signal = signal[:max_len]
+    # Limit duration (max 5 sec)
+    signal = signal[:5 * sr]
 
-    # 3️⃣ Trim silence
+    # Trim silence
     signal, _ = librosa.effects.trim(signal, top_db=20)
 
-    # 4️⃣ Normalize safely
     if signal.size == 0:
-        raise ValueError("Audio is empty after trimming")
+        raise ValueError("Empty audio after trimming")
 
+    # Normalize
     signal = librosa.util.normalize(signal)
 
-    # 5️⃣ Extract MFCCs (fixed size)
+    # Extract MFCCs
     mfcc = librosa.feature.mfcc(
         y=signal,
         sr=sr,
@@ -64,19 +58,18 @@ def predict_emotion(audio_path):
         n_fft=512
     )
 
-    # 6️⃣ Pad / trim MFCC frames to exactly 100
+    # Pad / trim frames
     if mfcc.shape[1] < 100:
         mfcc = np.pad(mfcc, ((0, 0), (0, 100 - mfcc.shape[1])))
     else:
         mfcc = mfcc[:, :100]
 
-    # 7️⃣ Add batch & channel dims
     mfcc = mfcc[np.newaxis, ..., np.newaxis]  # (1, 40, 100, 1)
 
-    # 8️⃣ Predict
-    pred = model.predict(mfcc, verbose=0)[0]
+    # 🔥 IMPORTANT FIX: DO NOT USE model.predict()
+    pred = model(mfcc, training=False).numpy()[0]
 
-    # 9️⃣ Smooth predictions
+    # Smooth predictions
     prediction_buffer.append(pred)
     avg_pred = np.mean(prediction_buffer, axis=0)
 
@@ -84,7 +77,6 @@ def predict_emotion(audio_path):
     emotion = emotion_labels[emotion_index]
     confidence = float(avg_pred[emotion_index])
 
-    # 🔟 Stress mapping
     if emotion in ["Neutral", "Calm"]:
         stress = "Low"
     elif emotion in ["Happy", "Sad", "Surprised"]:
