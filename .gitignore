@@ -37,7 +37,6 @@ __pycache__/
 *.npy
 data/
 temp_*.webm
-*.keras
 
 # Node
 node_modules/
