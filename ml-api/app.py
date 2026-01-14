@@ -23,22 +23,8 @@
 
 
 
-
-
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from predict import predict_emotion
-import os
-import uuid
-
-print(">>> FLASK ML API RUNNING <<<")
-
-app = Flask(__name__)
-CORS(app)
-
-@app.route("/", methods=["GET"])
-def home():
-    return "FLASK ML API IS RUNNING"
+import tensorflow as tf
+print("🔥 TENSORFLOW VERSION:", tf.__version__)
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -48,24 +34,20 @@ def predict():
 
         audio = request.files["audio"]
 
-        temp_file = f"temp_{uuid.uuid4().hex}.wav"
-        audio.save(temp_file)
+        temp_path = "temp.wav"
+        audio.save(temp_path)
 
-        result = predict_emotion(temp_file)
+        result = predict_emotion(temp_path)
 
-        os.remove(temp_file)
-
+        os.remove(temp_path)
         return jsonify(result)
 
     except Exception as e:
         print("🔥 FLASK ERROR:", repr(e))
-        return jsonify({"error": str(e)}), 500
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
-
-
+        return jsonify({
+            "error": "Processing failed",
+            "details": str(e)
+        }), 500
 
 
 
