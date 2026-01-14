@@ -27,35 +27,56 @@ emotion_labels = [
     "Angry", "Fearful", "Disgust", "Surprised"
 ]
 
-# ✅ Load model ONCE at startup (H5 = stable)
+# ✅ Load model ONCE at startup
 model = tf.keras.models.load_model(MODEL_PATH)
 print("✅ Model loaded successfully")
 
 # -----------------------------
-# 🎧 Prediction function
+# 🎧 Prediction function (MEMORY SAFE)
 # -----------------------------
 def predict_emotion(audio_path):
-    # Load audio
-    signal, sr = librosa.load(audio_path, sr=None)
+    """
+    Memory-safe audio inference for Render Free Tier
+    """
+
+    # 1️⃣ Load audio with fixed sample rate & mono (CRITICAL)
+    signal, sr = librosa.load(audio_path, sr=16000, mono=True)
+
+    # 2️⃣ Limit audio length (max 5 seconds)
+    max_len = 5 * sr
+    signal = signal[:max_len]
+
+    # 3️⃣ Trim silence
     signal, _ = librosa.effects.trim(signal, top_db=20)
+
+    # 4️⃣ Normalize safely
+    if signal.size == 0:
+        raise ValueError("Audio is empty after trimming")
+
     signal = librosa.util.normalize(signal)
 
-    # Extract MFCCs
-    mfcc = librosa.feature.mfcc(y=signal, sr=sr, n_mfcc=40)
+    # 5️⃣ Extract MFCCs (fixed size)
+    mfcc = librosa.feature.mfcc(
+        y=signal,
+        sr=sr,
+        n_mfcc=40,
+        hop_length=160,
+        n_fft=512
+    )
 
-    # Pad / trim to fixed length (100 frames)
+    # 6️⃣ Pad / trim MFCC frames to exactly 100
     if mfcc.shape[1] < 100:
         mfcc = np.pad(mfcc, ((0, 0), (0, 100 - mfcc.shape[1])))
     else:
         mfcc = mfcc[:, :100]
 
-    # Add batch & channel dimensions
+    # 7️⃣ Add batch & channel dims
     mfcc = mfcc[np.newaxis, ..., np.newaxis]  # (1, 40, 100, 1)
 
-    # Predict
-    pred = model.predict(mfcc, verbose=0)[0]  # shape (8,)
+    # 8️⃣ Predict
+    pred = model.predict(mfcc, verbose=0)[0]
 
-    # Smooth predictions
+    # 9️⃣ Smooth predictions
     prediction_buffer.append(pred)
     avg_pred = np.mean(prediction_buffer, axis=0)
 
@@ -63,7 +84,7 @@ def predict_emotion(audio_path):
     emotion = emotion_labels[emotion_index]
     confidence = float(avg_pred[emotion_index])
 
-    # Stress mapping
+    # 🔟 Stress mapping
     if emotion in ["Neutral", "Calm"]:
         stress = "Low"
     elif emotion in ["Happy", "Sad", "Surprised"]:
