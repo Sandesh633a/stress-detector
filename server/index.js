@@ -51,7 +51,7 @@ app.post("/analyze", upload.single("audio"), async (req, res) => {
       formData,
       {
         headers: formData.getHeaders(),
-        timeout: 60000, // 60s timeout (cold start safe)
+        timeout: 120000, // 2mins timeout (cold start safe)
       }
     );
 
