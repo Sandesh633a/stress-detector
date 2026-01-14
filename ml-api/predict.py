@@ -27,29 +27,27 @@ emotion_labels = [
 ]
 
 model = tf.keras.models.load_model(MODEL_PATH)
-print("✅ Model loaded successfully")
+
+# 🔥 THE ACTUAL FIX (ONLY THIS WAS MISSING)
+model.run_eagerly = True
+tf.config.run_functions_eagerly(True)
+
+print("✅ Model loaded successfully (eager execution)")
 
 # -----------------------------
 # 🎧 Prediction function (STABLE)
 # -----------------------------
 def predict_emotion(audio_path):
 
-    # Load audio safely
     signal, sr = librosa.load(audio_path, sr=16000, mono=True)
-
-    # Limit duration (max 5 sec)
     signal = signal[:5 * sr]
 
-    # Trim silence
     signal, _ = librosa.effects.trim(signal, top_db=20)
-
     if signal.size == 0:
         raise ValueError("Empty audio after trimming")
 
-    # Normalize
     signal = librosa.util.normalize(signal)
 
-    # Extract MFCCs
     mfcc = librosa.feature.mfcc(
         y=signal,
         sr=sr,
@@ -58,18 +56,16 @@ def predict_emotion(audio_path):
         n_fft=512
     )
 
-    # Pad / trim frames
     if mfcc.shape[1] < 100:
         mfcc = np.pad(mfcc, ((0, 0), (0, 100 - mfcc.shape[1])))
     else:
         mfcc = mfcc[:, :100]
 
-    mfcc = mfcc[np.newaxis, ..., np.newaxis]  # (1, 40, 100, 1)
+    mfcc = mfcc[np.newaxis, ..., np.newaxis]
 
-    # 🔥 IMPORTANT FIX: DO NOT USE model.predict()
+    # NO model.predict(), direct call
     pred = model(mfcc, training=False).numpy()[0]
 
-    # Smooth predictions
     prediction_buffer.append(pred)
     avg_pred = np.mean(prediction_buffer, axis=0)
 
