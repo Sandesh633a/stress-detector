@@ -1,10 +1,14 @@
 # predict.py
 
+import tensorflow as tf
+
+# 🔥 MUST BE FIRST (before anything touches the model)
+tf.config.run_functions_eagerly(True)
+
 from collections import deque
 import os
 import librosa
 import numpy as np
-import tensorflow as tf
 
 # -----------------------------
 # 🔁 Prediction smoothing
@@ -28,9 +32,8 @@ emotion_labels = [
 
 model = tf.keras.models.load_model(MODEL_PATH)
 
-# 🔥 THE ACTUAL FIX (ONLY THIS WAS MISSING)
+# secondary safety (does not hurt)
 model.run_eagerly = True
-tf.config.run_functions_eagerly(True)
 
 print("✅ Model loaded successfully (eager execution)")
 
@@ -39,15 +42,21 @@ print("✅ Model loaded successfully (eager execution)")
 # -----------------------------
 def predict_emotion(audio_path):
 
+    # Load audio safely
     signal, sr = librosa.load(audio_path, sr=16000, mono=True)
+
+    # Limit duration (max 5 seconds)
     signal = signal[:5 * sr]
 
+    # Trim silence
     signal, _ = librosa.effects.trim(signal, top_db=20)
     if signal.size == 0:
         raise ValueError("Empty audio after trimming")
 
+    # Normalize
     signal = librosa.util.normalize(signal)
 
+    # Extract MFCCs
     mfcc = librosa.feature.mfcc(
         y=signal,
         sr=sr,
@@ -56,6 +65,7 @@ def predict_emotion(audio_path):
         n_fft=512
     )
 
+    # Pad / trim frames
     if mfcc.shape[1] < 100:
         mfcc = np.pad(mfcc, ((0, 0), (0, 100 - mfcc.shape[1])))
     else:
@@ -63,9 +73,10 @@ def predict_emotion(audio_path):
 
     mfcc = mfcc[np.newaxis, ..., np.newaxis]
 
-    # NO model.predict(), direct call
+    # 🔥 DO NOT USE model.predict()
     pred = model(mfcc, training=False).numpy()[0]
 
+    # Smooth predictions
     prediction_buffer.append(pred)
     avg_pred = np.mean(prediction_buffer, axis=0)
 
