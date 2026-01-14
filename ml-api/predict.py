@@ -4,7 +4,7 @@ from collections import deque
 import os
 import librosa
 import numpy as np
-from tensorflow.keras.models import load_model
+import tensorflow as tf
 
 # -----------------------------
 # 🔁 Prediction smoothing
@@ -13,7 +13,7 @@ SMOOTHING_WINDOW = 3
 prediction_buffer = deque(maxlen=SMOOTHING_WINDOW)
 
 # -----------------------------
-# 📦 Model loading (SAFE)
+# 📦 Model loading (ABSOLUTE + SAFE)
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "emotion_model.keras")
@@ -27,8 +27,8 @@ emotion_labels = [
     "Angry", "Fearful", "Disgust", "Surprised"
 ]
 
-# Load model ONCE at startup
-model = load_model(MODEL_PATH)
+# ✅ Load model ONCE at startup (TF-safe)
+model = tf.keras.models.load_model(MODEL_PATH)
 print("✅ Model loaded successfully")
 
 # -----------------------------
