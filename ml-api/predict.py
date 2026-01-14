@@ -16,7 +16,7 @@ prediction_buffer = deque(maxlen=SMOOTHING_WINDOW)
 # 📦 Model loading (ABSOLUTE + SAFE)
 # -----------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "emotion_model.keras")
+MODEL_PATH = os.path.join(BASE_DIR, "emotion_model.h5")
 
 print("🔍 Loading model from:", MODEL_PATH)
 print("📁 Model file exists:", os.path.exists(MODEL_PATH))
@@ -27,7 +27,7 @@ emotion_labels = [
     "Angry", "Fearful", "Disgust", "Surprised"
 ]
 
-# ✅ Load model ONCE at startup (TF-safe)
+# ✅ Load model ONCE at startup (H5 = stable)
 model = tf.keras.models.load_model(MODEL_PATH)
 print("✅ Model loaded successfully")
 
