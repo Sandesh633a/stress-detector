@@ -1,14 +1,3 @@
-// Keep ML API warm
-setInterval(async () => {
-  try {
-    await axios.get(process.env.ML_API_URL);
-    console.log("🔥 ML API warmed");
-  } catch {}
-}, 5 * 60 * 1000); // every 5 minutes
-
-
-
-
 const ffmpeg = require("fluent-ffmpeg");
 const ffmpegPath = require("ffmpeg-static");
 ffmpeg.setFfmpegPath(ffmpegPath);
@@ -19,12 +8,10 @@ const axios = require("axios");
 const cors = require("cors");
 const fs = require("fs");
 const FormData = require("form-data");
-const path = require("path");
 
 const app = express();
 app.use(cors());
 
-// Multer config (store audio temporarily)
 const upload = multer({ dest: "uploads/" });
 
 // Health check
@@ -32,7 +19,7 @@ app.get("/", (req, res) => {
   res.send("Node backend is running");
 });
 
-// Receive audio from React → send to Flask ML API
+// React → Node → Flask ML API
 app.post("/analyze", upload.single("audio"), async (req, res) => {
   let webmPath, wavPath;
 
@@ -44,7 +31,7 @@ app.post("/analyze", upload.single("audio"), async (req, res) => {
     webmPath = req.file.path;
     wavPath = webmPath + ".wav";
 
-    // Convert webm → wav
+    // Convert to WAV
     await new Promise((resolve, reject) => {
       ffmpeg(webmPath)
         .toFormat("wav")
@@ -56,29 +43,29 @@ app.post("/analyze", upload.single("audio"), async (req, res) => {
     const formData = new FormData();
     formData.append("audio", fs.createReadStream(wavPath));
 
-    // Call Flask ML API (DEPLOYED URL)
-    const flaskResponse = await axios.post(
-      `${process.env.ML_API_URL}/predict`,
+    // 🔥 CALL LOCAL FLASK API
+    const mlResponse = await axios.post(
+      "http://10.40.97.100:9000/predict",
       formData,
       {
         headers: formData.getHeaders(),
-        timeout: 120000, // 2mins timeout (cold start safe)
+        timeout: 120000,
       }
     );
 
-    res.json(flaskResponse.data);
+    res.json(mlResponse.data);
+
   } catch (error) {
-    console.error("🔥 ERROR:", error.message);
+    console.error("🔥 NODE ERROR:", error.message);
     res.status(500).json({ error: "Processing failed" });
   } finally {
-    // Cleanup temp files safely
     if (webmPath && fs.existsSync(webmPath)) fs.unlinkSync(webmPath);
     if (wavPath && fs.existsSync(wavPath)) fs.unlinkSync(wavPath);
   }
 });
 
-// Start server (Render-safe)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`Node server running on port ${PORT}`);
 });
+

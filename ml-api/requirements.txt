@@ -1,7 +1,5 @@
-tensorflow<2.15
-numpy
+tensorflow==2.14.1
 librosa
+numpy
 soundfile
-flask
-flask-cors
-gunicorn
+gradio

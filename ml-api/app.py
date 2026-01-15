@@ -119,54 +119,38 @@
 
 
 
-import os
-import uuid
-import tensorflow as tf
 from flask import Flask, request, jsonify
+from flask_cors import CORS
+import os
 from predict import predict_emotion
 
-# -----------------------------
-# 🚀 Flask app initialization
-# -----------------------------
 app = Flask(__name__)
+CORS(app)
 
-# -----------------------------
-# 🔥 Log TensorFlow version
-# -----------------------------
-print("🔥 TENSORFLOW VERSION:", tf.__version__)
-
-# -----------------------------
-# 🏠 Health check
-# -----------------------------
 @app.route("/", methods=["GET"])
 def home():
-    return "FLASK ML API RUNNING"
+    return "ML API running"
 
-# -----------------------------
-# 🎧 Prediction endpoint
-# -----------------------------
 @app.route("/predict", methods=["POST"])
 def predict():
-    temp_path = None
     try:
         if "audio" not in request.files:
-            return jsonify({"error": "No audio file received"}), 400
+            return jsonify({"error": "No audio received"}), 400
 
         audio = request.files["audio"]
-
-        temp_path = f"temp_{uuid.uuid4().hex}.wav"
+        temp_path = "temp.wav"
         audio.save(temp_path)
 
         result = predict_emotion(temp_path)
+
+        os.remove(temp_path)
         return jsonify(result)
 
     except Exception as e:
-        print("🔥 FLASK ERROR:", repr(e))
-        return jsonify({
-            "error": "Processing failed",
-            "details": str(e)
-        }), 500
+        print("🔥 ML ERROR:", e)
+        return jsonify({"error": "Processing failed"}), 500
 
-    finally:
-        if temp_path and os.path.exists(temp_path):
-            os.remove(temp_path)
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=9000, debug=True)
+

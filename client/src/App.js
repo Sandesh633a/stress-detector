@@ -1143,8 +1143,6 @@
 
 import SmoothScroll from "./components/SmoothScroll";
 
-
-
 import { BrowserRouter } from "react-router-dom";
 import Topbar from "./components/Topbar";
 import AmbientBackground from "./components/AmbientBackground";
